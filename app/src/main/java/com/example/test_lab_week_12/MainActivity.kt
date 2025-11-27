@@ -1,14 +1,14 @@
 package com.example.test_lab_week_12
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.RecyclerView
 import com.example.test_lab_week_12.model.Movie
 import com.google.android.material.snackbar.Snackbar
-import java.util.*
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -18,13 +18,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Inisialisasi adapter dengan click listener
         movieAdapter = MovieAdapter(object : MovieAdapter.MovieClickListener {
             override fun onMovieClick(movie: Movie) {
-                val intent = Intent(this@MainActivity, DetailsActivity::class.java).apply {
-                    putExtra("movie", movie)
-                }
-                startActivity(intent)
             }
         })
 
@@ -32,30 +27,22 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = movieAdapter
 
         val movieRepository = (application as MovieApplication).movieRepository
+        val movieViewModel = MovieViewModel(movieRepository)
 
-        val movieViewModel = ViewModelProvider(
-            this,
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return MovieViewModel(movieRepository) as T
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    movieViewModel.popularMovies.collect { movies ->
+                        movieAdapter.addMovies(movies) // ❌ TANPA FILTER/SORT
+                    }
                 }
-            }
-        )[MovieViewModel::class.java]
-
-        val currentYear = Calendar.getInstance().get(Calendar.YEAR).toString()
-
-        // Observe LiveData dari ViewModel
-        movieViewModel.popularMovies.observe(this) { popularMovies ->
-            val filteredAndSorted = popularMovies
-                //.filter { movie -> movie.releaseDate?.startsWith(currentYear) == true }
-                .sortedByDescending { it.popularity }
-            movieAdapter.addMovies(filteredAndSorted)
-        }
-
-        movieViewModel.error.observe(this) { error ->
-            if (error.isNotEmpty()) {
-                Snackbar.make(recyclerView, error, Snackbar.LENGTH_LONG).show()
+                launch {
+                    movieViewModel.error.collect { errorMsg ->
+                        if (errorMsg.isNotEmpty()) {
+                            Snackbar.make(recyclerView, errorMsg, Snackbar.LENGTH_LONG).show()
+                        }
+                    }
+                }
             }
         }
     }
