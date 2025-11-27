@@ -33,14 +33,14 @@ class MainActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     movieViewModel.popularMovies.collect { movies ->
-                        movieAdapter.addMovies(movies) // ❌ TANPA FILTER/SORT
-                    }
-                }
-                launch {
-                    movieViewModel.error.collect { errorMsg ->
-                        if (errorMsg.isNotEmpty()) {
-                            Snackbar.make(recyclerView, errorMsg, Snackbar.LENGTH_LONG).show()
-                        }
+                        val currentYear =
+                            java.util.Calendar.getInstance().get(java.util.Calendar.YEAR).toString()
+                        val filteredAndSorted = movies
+                            .filter { movie ->
+                                movie.releaseDate?.startsWith(currentYear) == true
+                            }
+                            .sortedByDescending { it.popularity }
+                        movieAdapter.addMovies(filteredAndSorted)
                     }
                 }
             }

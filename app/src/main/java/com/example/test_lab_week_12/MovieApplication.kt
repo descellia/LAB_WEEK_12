@@ -1,6 +1,7 @@
 package com.example.test_lab_week_12
 
 import android.app.Application
+import com.example.test_lab_week_12.MovieRepository
 import com.example.test_lab_week_12.api.MovieService
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
