@@ -15,8 +15,8 @@ class MovieAdapter(private val clickListener: MovieClickListener) :
     private val movies = mutableListOf<Movie>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MovieViewHolder {
-        val view =
-            LayoutInflater.from(parent.context).inflate(R.layout.view_movie_item, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.view_movie_item, parent, false)
         return MovieViewHolder(view)
     }
 
@@ -29,8 +29,9 @@ class MovieAdapter(private val clickListener: MovieClickListener) :
     }
 
     fun addMovies(movieList: List<Movie>) {
+        movies.clear() // opsional: agar tidak duplikat saat update
         movies.addAll(movieList)
-        notifyItemRangeInserted(0, movieList.size)
+        notifyDataSetChanged() // lebih aman daripada notifyItemRangeInserted saat clear
     }
 
     class MovieViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
